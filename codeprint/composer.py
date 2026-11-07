@@ -80,6 +80,11 @@ class Composer:
                 source, backend,
                 lambda ex: net.predict(*net.encode(ex)))
 
+        if "structure" in axes:
+            from codeprint.structure_axis import apply_structure
+            source = apply_structure(source, backend,
+                                     axes["structure"]["scheme"])
+
         if "blanklines" in axes:
             net = self._net(axes["blanklines"]["model"])
             decider = NeuralDecider()

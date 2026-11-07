@@ -88,6 +88,14 @@ class TestComposer(unittest.TestCase):
         src = "const somethingLong = computeValue(); // длинный комментарий\n"
         out = c.apply(src, ".ts")
         self.assertTrue(out.splitlines()[0].strip().startswith("//"))
+    def test_structure_axis(self):
+        profile = {"axes": {"structure": {"scheme": "alpha"}}}
+        c = Composer(profile)
+        src = ("class S {\n  zeta() {\n    return 1;\n  }\n"
+               "  alpha() {\n    return 2;\n  }\n}\n")
+        out = c.apply(src, ".ts")
+        self.assertLess(out.index("alpha()"), out.index("zeta()"))
+        self.assertEqual(out, c.apply(out, ".ts"))  # идемпотентно
 
 
 if __name__ == "__main__":

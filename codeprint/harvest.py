@@ -97,6 +97,7 @@ from codeprint.comments_axis import extract_comments_examples
 from codeprint.idioms_axis import extract_idioms_examples
 from codeprint.imports_axis import extract_imports_examples
 from codeprint.naming_axis import extract_naming_examples
+from codeprint.structure_axis import extract_structure_examples
 from codeprint.wrapping_axis import extract_wrapping_examples
 
 AXES = {
@@ -107,6 +108,7 @@ AXES = {
     "naming": extract_naming_examples,
     "idioms": extract_idioms_examples,
     "comments": extract_comments_examples,
+    "structure": extract_structure_examples,
 }
 
 
