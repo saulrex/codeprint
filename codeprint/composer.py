@@ -86,6 +86,11 @@ class Composer:
             decider._net = net
             source = restyle(source, decider, backend=backend)
 
+        if "idioms" in axes:
+            from codeprint.idioms_axis import apply_idioms
+            source = apply_idioms(source, backend,
+                                  axes["idioms"]["ternary_max_chars"])
+
         # синтаксический гейт: битый результат -> откат всего файла
         from codeprint.syntax_gate import gate_allows
         if not gate_allows(original, source, ext):

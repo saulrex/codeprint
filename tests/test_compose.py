@@ -73,6 +73,14 @@ class TestComposer(unittest.TestCase):
     def test_unknown_ext_passthrough(self):
         c = Composer({"axes": {}})
         self.assertEqual(c.apply("x = 1\n", ".txt"), "x = 1\n")
+    def test_idioms_axis(self):
+        profile = {"axes": {"idioms": {"ternary_max_chars": 100}}}
+        c = Composer(profile)
+        src = ("function f(x) {\n  if (x > 0) {\n    return 'pos';\n  }\n"
+               "  return 'neg';\n}\n")
+        out = c.apply(src, ".ts")
+        self.assertIn("return x > 0 ? 'pos' : 'neg';", out)
+        self.assertEqual(out, c.apply(out, ".ts"))  # идемпотентно
 
 
 if __name__ == "__main__":
