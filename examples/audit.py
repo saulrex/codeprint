@@ -39,9 +39,11 @@ def main() -> int:
     composer = Composer(load_profile(args.profile))
     repo = Path(args.repo)
 
-    skip = {".git", "node_modules", "dist", "build", "__pycache__"}
+    skip = {".git", "node_modules", "dist", "build", "__pycache__", ".yarn"}
     files = [p for p in sorted(repo.rglob("*"))
-             if p.suffix.lower() in BACKEND_BY_EXT and not (set(p.parts) & skip)]
+             if p.suffix.lower() in BACKEND_BY_EXT and not (set(p.parts) & skip)
+             and p.stat().st_size < 200_000  # вендорные бандлы не рестайлим
+             and not p.name.startswith("yarn-")]
     files = files[: args.limit]
 
     stats = Counter()
@@ -72,20 +74,26 @@ def main() -> int:
         lost = list((before - after).elements())
         added = list((after - before).elements())
         ident_re = re.compile(r"^[A-Za-z_$][A-Za-z0-9_$]*$")
-        if lost and all(ident_re.match(t) for t in lost + added) \
-                and len(lost) == len(added):
-            stats["renamed_idents"] += 1  # naming-ось: ожидаемо
+        idiom_kw = {"if", "else", "return"}
+        idiom_punct = {"?", ":", ";", "{", "}", "(", ")", ","} | idiom_kw
+        lost_id = [t for t in lost
+                   if ident_re.match(t) and t not in idiom_kw]
+        added_id = [t for t in added
+                    if ident_re.match(t) and t not in idiom_kw]
+        punct_delta = set(lost + added) - set(lost_id) - set(added_id)
+        if not lost and not added:
+            stats["tokens_ok"] += 1
+        elif punct_delta <= idiom_punct and len(lost_id) == len(added_id):
+            # naming-переименования и/или конверсия идиом — ожидаемо
+            stats["renamed_or_idiom"] += 1
+        elif punct_delta <= idiom_punct and not lost_id and not added_id:
+            stats["idiom_converted"] += 1
         elif lost:
             stats["tokens_LOST"] += 1
             anomalies.append(f"{f.name}: ПОТЕРЯНЫ токены {lost[:5]}")
-        elif added and set(added) == {","}:
-            # trailing comma — осознанный стиль (.prettierrc: trailingComma all)
-            stats["trailing_comma_added"] += 1
-        elif added:
+        else:
             stats["tokens_added"] += 1
             anomalies.append(f"{f.name}: добавлены токены {added[:5]}")
-        else:
-            stats["tokens_ok"] += 1
 
         # 2. сходимость: naming-гварды зависят от результата других осей,
         # поэтому 1->2 может двигаться; стабильность обязательна с 2->3
@@ -125,7 +133,7 @@ def main() -> int:
         stats["changed" if out1 != src else "unchanged"] += 1
 
     print(f"\n=== аудит {args.profile} на {len(files)} файлах ===")
-    for k in ("tokens_ok", "renamed_idents", "idempotent", "converged_at_2",
+    for k in ("tokens_ok", "renamed_or_idiom", "idiom_converted", "idempotent", "converged_at_2",
               "syntax_ok", "gate_blind", "changed", "unchanged",
               "trailing_comma_added", "tokens_LOST", "tokens_added",
               "no_fixpoint", "apply_exception",

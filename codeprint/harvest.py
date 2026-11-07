@@ -93,6 +93,7 @@ def extract_blankline_examples(source: str, backend=logiclines) -> list[dict]:
 
 #: Реестр стилевых осей. Новые оси добавляются сюда.
 from codeprint.filefeat_axis import extract_filefeat
+from codeprint.comments_axis import extract_comments_examples
 from codeprint.idioms_axis import extract_idioms_examples
 from codeprint.imports_axis import extract_imports_examples
 from codeprint.naming_axis import extract_naming_examples
@@ -105,6 +106,7 @@ AXES = {
     "filefeat": extract_filefeat,
     "naming": extract_naming_examples,
     "idioms": extract_idioms_examples,
+    "comments": extract_comments_examples,
 }
 
 

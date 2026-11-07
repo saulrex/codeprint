@@ -91,6 +91,11 @@ class Composer:
             source = apply_idioms(source, backend,
                                   axes["idioms"]["ternary_max_chars"])
 
+        if "comments" in axes:
+            from codeprint.comments_axis import apply_comments
+            source = apply_comments(source, backend,
+                                    axes["comments"]["trailing_max_chars"])
+
         # синтаксический гейт: битый результат -> откат всего файла
         from codeprint.syntax_gate import gate_allows
         if not gate_allows(original, source, ext):

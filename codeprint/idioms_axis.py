@@ -53,21 +53,34 @@ def _ex(axis_label: int, cond: str, a: str, b: str, indent: int, lang: str) -> d
     }
 
 
+def _line_of(source: str, pos: int) -> int:
+    return source.count("\n", 0, pos) + 1
+
+
+def _protected(source: str, backend) -> set[int]:
+    try:
+        return backend.string_body_lines(source)
+    except Exception:
+        return set()
+
+
 def extract_idioms_examples(source: str, backend) -> list[dict]:
     lang = getattr(backend, "LANG", "python")
+    protected = _protected(source, backend)
     out = []
+    patterns = []
     if lang == "python":
-        for m in _PY_IFELSE_RE.finditer(source):
-            out.append(_ex(0, m["cond"], m["a"], m["b"], len(m["indent"]), lang))
-        for m in _PY_TERNARY_RE.finditer(source):
-            out.append(_ex(1, m["c"], m["a"], m["b"], len(m["indent"]), lang))
+        patterns = [(_PY_IFELSE_RE, 0, "cond"), (_PY_TERNARY_RE, 1, "c")]
     else:
-        for m in _TS_IFELSE_RE.finditer(source):
-            out.append(_ex(0, m["cond"], m["a"], m["b"], len(m["indent"]), lang))
-        for m in _TS_TERNARY_RE.finditer(source):
-            if "?." in m.group(0):
+        patterns = [(_TS_IFELSE_RE, 0, "cond"), (_TS_TERNARY_RE, 1, "cond")]
+    for rx, label, ckey in patterns:
+        for m in rx.finditer(source):
+            span = {_line_of(source, m.start()), _line_of(source, m.end())}
+            if span & protected:
+                continue  # внутри template/строки — не трогаем
+            if label == 1 and "?." in m.group(0):
                 continue  # optional chaining — не наш паттерн
-            out.append(_ex(1, m["cond"], m["a"], m["b"], len(m["indent"]), lang))
+            out.append(_ex(label, m[ckey], m["a"], m["b"], len(m["indent"]), lang))
     return out
 
 
@@ -78,6 +91,11 @@ def apply_idioms(source: str, backend, ternary_max_chars: int) -> str:
     иначе if-else. Порог из профиля автора (examples/profile_idioms.py).
     """
     lang = getattr(backend, "LANG", "python")
+    protected = _protected(source, backend)
+
+    def blocked(m) -> bool:
+        span = {_line_of(source, m.start()), _line_of(source, m.end())}
+        return bool(span & protected)
 
     def to_ternary(cond, a, b, ind, lang):
         if lang == "python":
@@ -97,12 +115,16 @@ def apply_idioms(source: str, backend, ternary_max_chars: int) -> str:
 
     if lang == "python":
         def sub_if(m):
+            if blocked(m):
+                return m.group(0)
             total = len(m["cond"]) + len(m["a"]) + len(m["b"])
             if total <= ternary_max_chars:
                 return to_ternary(m["cond"], m["a"], m["b"], m["indent"], lang)
             return m.group(0)
 
         def sub_tern(m):
+            if blocked(m):
+                return m.group(0)
             total = len(m["c"]) + len(m["a"]) + len(m["b"])
             if total <= ternary_max_chars:
                 return m.group(0)
@@ -112,13 +134,15 @@ def apply_idioms(source: str, backend, ternary_max_chars: int) -> str:
         source = _PY_TERNARY_RE.sub(sub_tern, source)
     else:
         def sub_if(m):
+            if blocked(m):
+                return m.group(0)
             total = len(m["cond"]) + len(m["a"]) + len(m["b"])
             if total <= ternary_max_chars:
                 return to_ternary(m["cond"], m["a"], m["b"], m["indent"], lang)
             return m.group(0)
 
         def sub_tern(m):
-            if "?." in m.group(0):
+            if blocked(m) or "?." in m.group(0):
                 return m.group(0)
             total = len(m["cond"]) + len(m["a"]) + len(m["b"])
             if total <= ternary_max_chars:

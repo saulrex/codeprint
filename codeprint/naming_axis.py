@@ -46,6 +46,11 @@ def mask_code(line: str) -> str:
     return re.sub(r"//.*$", lambda m: "\x00" * len(m.group(0)), masked)
 
 
+def mask_strings(line: str) -> str:
+    """То же, но комментарии НЕ зануляются (для оси comments)."""
+    return _STRING_RE.sub(lambda m: "\x00" * len(m.group(0)), line)
+
+
 def split_words(ident: str) -> list[str]:
     """fetchTemplateParts / fetch_template_parts -> [fetch, template, parts]."""
     words: list[str] = []

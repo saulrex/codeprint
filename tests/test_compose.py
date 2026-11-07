@@ -82,6 +82,13 @@ class TestComposer(unittest.TestCase):
         self.assertIn("return x > 0 ? 'pos' : 'neg';", out)
         self.assertEqual(out, c.apply(out, ".ts"))  # идемпотентно
 
+    def test_comments_axis(self):
+        profile = {"axes": {"comments": {"trailing_max_chars": 30}}}
+        c = Composer(profile)
+        src = "const somethingLong = computeValue(); // длинный комментарий\n"
+        out = c.apply(src, ".ts")
+        self.assertTrue(out.splitlines()[0].strip().startswith("//"))
+
 
 if __name__ == "__main__":
     unittest.main()
