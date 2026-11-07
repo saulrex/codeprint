@@ -1,0 +1,14 @@
+# Ядро (harvest, wizard, axes, composer, audit) — только stdlib, ноль зависимостей.
+
+# Обучение моделей (trainer, stylometer*):
+# torch>=2.0            # CPU-сборки достаточно
+
+# Инференс без torch (рестайл/bench с ONNX-моделями):
+# onnxruntime>=1.16
+
+# Syntax-gate для TS/JS (рекомендовано):
+# tree-sitter
+# tree-sitter-typescript
+
+# Сборка exe:
+# pyinstaller

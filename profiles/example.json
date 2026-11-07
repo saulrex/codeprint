@@ -1,0 +1,11 @@
+{
+  "name": "example",
+  "comment": "Шаблон профиля автора. Скопируй в profiles/<твоё-имя>.json и укажи свои модели. Профили приватны и не коммитятся (см. .gitignore).",
+  "axes": {
+    "imports": {"scheme": "flat_asis"},
+    "wrapping": {"model": "models/<твой-репо>"},
+    "blanklines": {"model": "models/blanklines"},
+    "naming": {"vocab_model": "models/naming-<твой-репо>", "seed": "придумай-свой-seed"}
+  },
+  "stylometer": "models/stylometer-<твой-репо>"
+}
