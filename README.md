@@ -71,6 +71,7 @@ python -m unittest discover -s tests
 | `python pipeline.py` | harvest → train → bench одной командой. |
 | `python similarity.py` | Winnowing-сходство файлов / до-после. |
 | `python public_rename.py` | Repo-wide публичные имена (dry-run по умолчанию). |
+| `python planner.py --file X --profile you` | Автоподбор осей под файл. |
 
 ### Standalone exe (уже собраны в `dist/`)
 
